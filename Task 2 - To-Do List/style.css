@@ -1,0 +1,45 @@
+body { /* styling the body */
+    font-family: Arial, Helvetica, sans-serif;
+    max-width: 400px;
+    margin: 50px auto;
+}
+
+.controls { /* aligning the buttons */
+    margin-bottom: 20px;
+}
+
+input { /* the task input bar */
+    padding: 8px;
+    width: 60%;
+}
+
+button { /* making the buttons look functional */
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+ul { /* for the unordered list */
+    list-style-type: none;
+    padding: 0;
+}
+
+li { /* for the list that will be made using javascript */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px;
+    background: #f4f4f4;
+    margin-bottom: 5px;
+}
+
+.completed span { /* the task state when it is completed */
+    text-decoration: line-through;
+    color: gray;
+}
+
+.stats { /* total tasks and all */
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+    font-weight: bold;
+}

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-do List</title>
+    <link rel="stylesheet" href="style.css"> <!-- connecting css file -->
+</head>
+<body>
+    <h2>My To-Do List</h2>
+    <div class="controls">
+        <input type="text" id="taskInput" placeholder="Enter a new task..."> <!-- user input for new task -->
+        <button id="addBtn">Add</button> <!-- to add a new task -->
+    </div>
+    <ul id="taskList"></ul>
+    <div class="stats">
+        <span>Total Tasks: <span id="taskCount">0</span></span> <!-- total no. of tasks -->
+        <button id="clearBtn">Clear All</button> <!-- for clearing all tasks -->
+    </div>
+    <script src="script.js"></script> <!-- connecting javascript file -->
+</body>
+</html>
