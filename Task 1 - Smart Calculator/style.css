@@ -1,0 +1,21 @@
+.body {
+    font-family: Arial, Helvetica, sans-serif; /* this is the body of the whole website */
+    margin: 20px;
+}
+
+.input, button { /* for the inputs and the buttons */
+    padding: 10px; 
+    margin: 5px;
+    font-size: 16px;
+}
+
+.error { /* display error when in the input, number 0 is divided with any other number */
+    color: red;
+    font-weight: bold;
+}
+
+.result { /* the result of the two inputs and their operators */
+    color: green;
+    font-weight: bold;
+    font-size: 20px;
+}

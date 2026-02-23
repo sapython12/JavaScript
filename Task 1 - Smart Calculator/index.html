@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Smart Calculator</h1>
+    <input type="number" id="num1" placeholder="Enter first number"> <!-- here we input our first number -->
+    <input type="number" id="num2" placeholder="Enter second number"> <!-- here we input our second number -->
+    <br>
+    <button id="addBtn">+</button> <!-- this will add both the numbers from the above inputs -->
+    <button id="subBtn">-</button> <!-- this will subtract both the numbers from the above inputs -->
+    <button id="mulBtn">*</button> <!-- this will multiply both the numbers from the above inputs -->
+    <button id="divBtn">/</button> <!-- this will divide both the numbers from the above inputs. Note that it will display an error when a number is divided by 0. -->
+
+    <p>result: <span id="resultDisplay" class="result">0</span></p>
+    <p id="errorDisplay" class="error"></p>
+    <script src="script.js"></script>
+</body>
+</html>
