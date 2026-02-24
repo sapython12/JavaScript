@@ -1,0 +1,44 @@
+body {
+    font-family: Arial, Helvetica, sans-serif; /* our usual font family since the previous tasks */
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* a little bit of adjustment */
+    margin-top: 50px;
+}
+
+#statusDisplay { /* for the current player's turn */
+    font-size: 1.5em;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+.board { /* the main board in which we play */
+    display: grid;
+    grid-template-columns: repeat(3, 100px);
+    grid-template-rows: repeat(3, 100px);
+    gap: 5px;
+    background-color: #333;
+    padding: 5px;
+    border-radius: 5px;
+}
+
+.cell { /* cells of the board */
+    background-color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.cell.win { /* when a player wins, it highlights the cells that they won in */
+    background-color: #90ee90;
+}
+
+button { /* the buttons on the cells to insert x or y */
+    margin-top: 20px;
+    padding: 10px 20px;
+    font-size: 1em;
+    cursor: pointer;
+}
