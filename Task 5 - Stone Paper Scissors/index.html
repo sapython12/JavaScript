@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stone Paper Scissor</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="game-card">
+        <h2>Stone Paper Scissor</h2>
+        
+        <div class="scoreboard">
+            <div class="score-box">
+                <span class="label">You</span>
+                <span id="userScore" class="score">0</span>
+            </div>
+            <div class="score-box">
+                <span class="label">Computer</span>
+                <span id="compScore" class="score">0</span>
+            </div>
+        </div>
+
+        <div class="match-display">
+            <p>You: <span id="userChoiceDisplay">...</span></p>
+            <p>Comp: <span id="compChoiceDisplay">...</span></p>
+        </div>
+
+        <div id="resultMessage" class="result">Make your move!</div>
+
+        <div class="choices">
+            <button class="choice-btn" data-choice="0">🪨 Stone</button>
+            <button class="choice-btn" data-choice="1">📄 Paper</button>
+            <button class="choice-btn" data-choice="2">✂️ Scissor</button>
+        </div>
+
+        <button id="resetBtn" class="reset-btn">Reset Game</button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
