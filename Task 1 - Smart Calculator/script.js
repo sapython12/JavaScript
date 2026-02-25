@@ -1,63 +1,133 @@
-// call the DOM elements we need to interact with
-const num1Input = document.getElementById('num1');
-const num2Input = document.getElementById('num2');
-const resultDisplay = document.getElementById('resultDisplay');
-const errorDisplay = document.getElementById('errorDisplay');
+const previousOperandElement = document.getElementById('previousOperand');
+const currentOperandElement = document.getElementById('currentOperand');
+const numberButtons = document.querySelectorAll('.number');
+const operationButtons = document.querySelectorAll('.operator:not(.equals)');
+const equalsButton = document.getElementById('equalsBtn');
+const clearButton = document.getElementById('clearBtn');
 
-// now it's time for the main calculations. so we will add a function here
-function calculate(operation) {
-    errorDisplay.innerText = ""; // to clear any error displayed
-    const val1 = num1Input.value; // to get the values from the inputs we've made
-    const val2 = num2Input.value;
-    if (val1 === "" || val2 === "") { // the input validation. it will show error if either of the inputs are empty or if both are empty.
-        errorDisplay.innerText = "Error: Please enter numbers in both of the inputs!";
-        resultDisplay.innerText = "0";
-        return; // stop this function here
+// variables to track the state of our calculations
+let currentOperand = '0';
+let previousOperand = '';
+let operation = undefined;
+
+// resets everything
+function clear() {
+    currentOperand = '0';
+    previousOperand = '';
+    operation = undefined;
+}
+
+// adds numbers to the screen when clicked
+function appendNumber(number) {
+    // if "Error" is currently on the screen, clear it out when a new number is pressed
+    if (currentOperand === 'Error') {
+        currentOperand = '0';
     }
-    const number1 = parseFloat(val1); // this will convert string values to actual numbers
-    const number2 = parseFloat(val2);
-    let finalResult = 0;
 
-    switch (operation) { // a conditional statement to handle the calculation
+    // prevent multiple decimals
+    if (number === '.' && currentOperand.includes('.')) return; 
+    
+    // replace the initial '0' with the newly typed number, unless typing a decimal
+    if (currentOperand === '0' && number !== '.') {
+        currentOperand = number;
+    } else {
+        currentOperand = currentOperand.toString() + number.toString();
+    }
+}
+
+// saves the first number and waits for the second
+function chooseOperation(op) {
+    // prevent operations if there's an error or no current number
+    if (currentOperand === 'Error' || currentOperand === '') return;
+    
+    // if we already have numbers, calculate them before chaining the next operator
+    if (previousOperand !== '') {
+        compute();
+    }
+    
+    // if computing just caused a divide-by-zero error, stop here
+    if (currentOperand === 'Error') return;
+    
+    operation = op;
+    previousOperand = currentOperand;
+    currentOperand = '';
+}
+
+// performs the actual math
+function compute() {
+    let computation;
+    const prev = parseFloat(previousOperand);
+    const current = parseFloat(currentOperand);
+    
+    // stop if there aren't two numbers to calculate
+    if (isNaN(prev) || isNaN(current)) return;
+
+    switch (operation) {
         case '+':
-            finalResult = number1 + number2;
+            computation = prev + current;
             break;
         case '-':
-            finalResult = number1 - number2;
-            break
-        case '*':
-            finalResult = number1 * number2;
-            break
-        case '/': // input validation to prevent division by 0
-            if (number2 === 0) {
-                errorDisplay.innerText = "Error: 0 cannot be divided.";
-                resultDisplay.innerText = "0";
-                return; // again, we stop this function here
-            }
-            finalResult = number1 / number2;
+            computation = prev - current;
             break;
+        case '*':
+            computation = prev * current;
+            break;
+        case '/':
+            if (current === 0) {
+                // show Error on the screen and reset the memory
+                currentOperand = 'Error';
+                operation = undefined;
+                previousOperand = '';
+                return; // stop the function completely
+            }
+            computation = prev / current;
+            break;
+        default:
+            return;
     }
+    
+    currentOperand = computation.toString();
+    operation = undefined;
+    previousOperand = '';
+}
 
-    // for dispaying the result dynamically
-    resultDisplay.innerText = finalResult;
+// updates the HTML text dynamically
+function updateDisplay() {
+    currentOperandElement.innerText = currentOperand;
+    if (operation != null) {
+        // show the operator symbol on the top screen
+        let symbol = operation;
+        if (operation === '*') symbol = '×';
+        if (operation === '/') symbol = '÷';
+        
+        previousOperandElement.innerText = `${previousOperand} ${symbol}`;
+    } else {
+        previousOperandElement.innerText = '';
+    }
 }
 
 // event listeners
-// when any of the 4 buttons are clicked, it will call the calculate function we've made and passes the maths symbol
-document.getElementById('addBtn').addEventListener('click', function() {
-    calculate('+');
-})
 
-document.getElementById('subBtn').addEventListener('click', function() {
-    calculate('-');
+numberButtons.forEach(button => {
+    button.addEventListener('click', () => {
+        appendNumber(button.innerText);
+        updateDisplay();
+    });
 });
 
-document.getElementById('mulBtn').addEventListener('click', function() {
-    calculate('*');
+operationButtons.forEach(button => {
+    button.addEventListener('click', () => {
+        chooseOperation(button.getAttribute('data-action'));
+        updateDisplay();
+    });
 });
 
-document.getElementById('divBtn').addEventListener('click', function() {
-    calculate('/');
+equalsButton.addEventListener('click', () => {
+    compute();
+    updateDisplay();
 });
 
-// end of our javascript code
+clearButton.addEventListener('click', () => {
+    clear();
+    updateDisplay();
+});
