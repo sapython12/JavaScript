@@ -1,21 +1,95 @@
-.body {
-    font-family: Arial, Helvetica, sans-serif; /* this is the body of the whole website */
-    margin: 20px;
+body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; /* this time we'll use a different font */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #f3f4f6;
+    margin: 0;
 }
 
-.input, button { /* for the inputs and the buttons */
-    padding: 10px; 
-    margin: 5px;
-    font-size: 16px;
+.calculator {
+    background-color: #222;
+    border-radius: 20px;
+    box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.3);
+    width: 320px;
+    overflow: hidden;
 }
 
-.error { /* display error when in the input, number 0 is divided with any other number */
-    color: red;
-    font-weight: bold;
+.display {
+    background-color: #222;
+    color: white;
+    padding: 30px 20px 20;
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    min-height: 90px;
+    word-wrap: break-word;
+    word-break: break-all;
 }
 
-.result { /* the result of the two inputs and their operators */
-    color: green;
-    font-weight: bold;
-    font-size: 20px;
+.previous-operand {
+    color: #a5a5a5;
+    font-size: 1.2rem;
+    min-height: 24px;
+}
+
+.current-operand {
+    font-size: 3.5rem;
+    margin-top: 5px;
+    font-weight: 300;
+}
+
+.buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background-color: #333;
+}
+
+button {
+    border: none;
+    outline: none;
+    padding: 20px;
+    font-size: 1.5rem;
+    background: #444;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.1s;
+}
+
+button:hover {
+    background-color: #555;
+}
+
+button:active {
+    background-color: #777;
+}
+
+.operator {
+    background-color: #ff9f0a;
+    color:white;
+    font-size: 1.8rem;
+}
+
+.operator:hover {
+    background-color: #ffb340;
+}
+
+.clear-btn {
+    background-color: #a5a5a5;
+    color: black;
+}
+
+.clear-btn:hover {
+    background-color: #d4d4d4;
+}
+
+.span-2 {
+    grid-column: span 2;
+}
+
+.span-3 {
+    grid-column: span 3;
 }
