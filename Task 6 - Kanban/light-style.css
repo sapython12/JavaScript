@@ -1,0 +1,81 @@
+/* light style and layout */
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+
+body { background-color: #f4f5f8; color: #1e293b; }
+
+/* navbars */
+.top-nav { padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; background-color: #2b324a; color: white; }
+.nav-brand { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+#theme-toggle { background: none; border: none; font-size: 20px; cursor: pointer; color: inherit; }
+
+/* filter Bar */
+.filter-bar { padding: 12px 20px; display: flex; justify-content: center; gap: 16px; align-items: center; font-size: 13px; background-color: #ffffff; border-bottom: 1px solid #e2e8f0; flex-wrap: wrap; }
+.filter-group { display: flex; align-items: center; gap: 8px; }
+.filter-bar select, .filter-bar input { padding: 6px 12px; border-radius: 4px; border: 1px solid #cbd5e1; outline: none; background-color: white; color: #334155; }
+
+/* main content container */
+.main-container { display: flex; gap: 20px; padding: 20px; max-width: 1200px; margin: 0 auto; align-items: flex-start;}
+
+/* sidebar form */
+.sidebar { width: 260px; padding: 20px; border-radius: 6px; border: 1px solid #e2e8f0; flex-shrink: 0; background-color: #ffffff; }
+.sidebar h3 { font-size: 16px; margin-bottom: 16px; font-weight: 600; }
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; font-size: 13px; margin-bottom: 6px; font-weight: 500; }
+.form-group input, .form-group textarea, .form-group select { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #cbd5e1; font-size: 13px; outline: none; background-color: #ffffff; color: #1e293b; }
+.form-group input:focus, .form-group textarea:focus { border-color: #4285f4; }
+.form-group textarea { resize: vertical; min-height: 60px; }
+.btn-add { width: 100%; padding: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 14px; transition: opacity 0.2s; background-color: #4285f4; color: white; }
+.btn-add:hover { opacity: 0.9; }
+
+/* Kanban board */
+.kanban-board { display: flex; gap: 20px; flex: 1; height: 75vh; }
+.column { flex: 1; display: flex; flex-direction: column; border-radius: 6px; overflow: hidden; border: 1px solid #e2e8f0; background-color: #ffffff; }
+
+/* column headers */
+.column-header { padding: 16px; display: flex; flex-direction: column; gap: 4px; }
+.column-header h2 { font-size: 16px; font-weight: 600; }
+.task-count { font-size: 12px; opacity: 0.9; }
+.header-todo { background-color: #5c6a8a; color: white; }
+.header-inprogress { background-color: #d9534f; color: white; }
+.header-completed { background-color: #4285f4; color: white; }
+
+/* task ist area */
+.task-list { padding: 12px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; min-height: 150px; background-color: #f8f9fa; }
+.task-list::-webkit-scrollbar { width: 6px; }
+.task-list::-webkit-scrollbar-thumb { border-radius: 3px; background-color: #cbd5e1; }
+.task-list.drag-over { background-color: #e2e8f0; border: 2px dashed #94a3b8; }
+
+/* task cards */
+.task-card { border-radius: 6px; padding: 16px; cursor: grab; border: 1px solid #e2e8f0; transition: transform 0.1s ease; background-color: white; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+.task-card:active { cursor: grabbing; }
+.card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+.card-header h4 { margin-bottom: 0; color: #1e293b; font-size: 14px; font-weight: 600; }
+.delete-btn { background: none; border: none; color: #94a3b8; font-size: 18px; cursor: pointer; line-height: 1; padding: 0 4px; border-radius: 4px; transition: 0.2s; }
+.delete-btn:hover { color: #d9534f; background-color: #fee2e2; }
+.task-card p { font-size: 13px; margin-bottom: 16px; line-height: 1.4; color: #64748b; }
+.task-card.dragging { opacity: 0.5; transform: scale(0.98); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+.completed-task h4, .completed-task p { text-decoration: line-through; opacity: 0.7; }
+
+/* meta info */
+.task-meta { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 600; }
+.due-date { color: #64748b; }
+.priority-badge { padding: 4px 8px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; }
+.p-low { background-color: #28a745; color: white; }
+.p-medium { background-color: #f6c23e; color: #1e293b; }
+.p-high { background-color: #d9534f; color: white; }
+.p-done { background-color: #28a745; color: white; }
+
+/* for mobile responsive */
+@media (max-width: 850px) {
+    .main-container { flex-direction: column; align-items: stretch; padding: 15px; }
+    .sidebar { width: 100%; margin-bottom: 10px; }
+    .kanban-board { flex-direction: column; height: auto; }
+    .column { min-height: 250px; }
+    .filter-bar { justify-content: flex-start; }
+}
+
+/* card header and delete button */
+.card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+.card-header h4 { margin-bottom: 0; color: #1e293b; }
+.delete-btn { background: none; border: none; color: #94a3b8; font-size: 18px; cursor: pointer; line-height: 1; padding: 0 4px; border-radius: 4px; transition: 0.2s; }
+.delete-btn:hover { color: #d9534f; background-color: #fee2e2; }

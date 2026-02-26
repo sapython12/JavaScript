@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Board</title>
+    <link id="theme-style" rel="stylesheet" href="light-style.css">
+</head>
+<body>
+
+    <header class="top-nav">
+        <div class="nav-brand">
+            <span>Task Board</span>
+        </div>
+        <button id="theme-toggle" aria-label="Toggle Theme">🌙</button>
+    </header>
+
+    <div class="filter-bar">
+        <div class="filter-group">
+            <label for="filter-priority">Priority:</label>
+            <select id="filter-priority">
+                <option value="All">All</option>
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <input type="text" id="filter-search" placeholder="Search tasks...">
+        </div>
+    </div>
+
+    <div class="main-container">
+        
+        <aside class="sidebar">
+            <h3>Add New Task</h3>
+            <form id="add-task-form">
+                <div class="form-group">
+                    <label for="task-title">Title</label>
+                    <input type="text" id="task-title" placeholder="Task title" required>
+                </div>
+                <div class="form-group">
+                    <label for="task-desc">Description</label>
+                    <textarea id="task-desc" placeholder="Task description" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="task-date">Due Date</label>
+                    <input type="date" id="task-date" required>
+                </div>
+                <div class="form-group">
+                    <label for="task-priority">Priority</label>
+                    <select id="task-priority">
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High" selected>High</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-add">Add Task</button>
+            </form>
+        </aside>
+
+        <div class="kanban-board">
+            
+            <div class="column" id="col-todo">
+                <div class="column-header header-todo">
+                    <h2>To Do</h2>
+                    <span class="task-count">0 Tasks</span>
+                </div>
+                <div class="task-list" id="todo-list"></div>
+            </div>
+
+            <div class="column" id="col-inprogress">
+                <div class="column-header header-inprogress">
+                    <h2>In Progress</h2>
+                    <span class="task-count">0 Tasks</span>
+                </div>
+                <div class="task-list" id="inprogress-list"></div>
+            </div>
+
+            <div class="column" id="col-completed">
+                <div class="column-header header-completed">
+                    <h2>Completed</h2>
+                    <span class="task-count">0 Tasks</span>
+                </div>
+                <div class="task-list" id="completed-list"></div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
