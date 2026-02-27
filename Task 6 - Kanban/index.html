@@ -14,7 +14,10 @@
         <div class="nav-brand">
             <span>Task Board</span>
         </div>
-        <button id="theme-toggle" aria-label="Toggle Theme"><i class="fas fa-moon"></i></button>
+        <div class="nav-actions">
+            <button id="view-archive-btn" class="btn-nav"><i class="fas fa-archive"></i> View Archive</button>
+            <button id="theme-toggle" aria-label="Toggle Theme"><i class="fas fa-moon"></i></button>
+        </div>
     </header>
 
     <div class="filter-bar">
@@ -31,6 +34,7 @@
             <input type="text" id="filter-search" placeholder="Search tasks...">
         </div>
         <div class="filter-group">
+            <button id="archive-selected-btn" class="btn-archive-selected"><i class="fas fa-box-archive"></i> Add to Archive</button>
             <button id="delete-selected-btn" class="btn-delete-selected"><i class="fas fa-trash"></i> Delete Selected</button>
         </div>
     </div>
@@ -146,6 +150,17 @@
                     <button type="submit" class="btn-add">Update Task</button>
                 </form>
             </div>
+        </div>
+    </div>
+
+    <div id="archive-modal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3>Archived Tasks</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body" id="archive-list-container" style="max-height: 400px; overflow-y: auto;">
+                </div>
         </div>
     </div>
 
