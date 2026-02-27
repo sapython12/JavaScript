@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Task Board</title>
     <link id="theme-style" rel="stylesheet" href="light-style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
 </head>
 <body>
 
@@ -12,7 +14,7 @@
         <div class="nav-brand">
             <span>Task Board</span>
         </div>
-        <button id="theme-toggle" aria-label="Toggle Theme">🌙</button>
+        <button id="theme-toggle" aria-label="Toggle Theme"><i class="fas fa-moon"></i></button>
     </header>
 
     <div class="filter-bar">
@@ -28,24 +30,30 @@
         <div class="filter-group">
             <input type="text" id="filter-search" placeholder="Search tasks...">
         </div>
+        <div class="filter-group">
+            <button id="delete-selected-btn" class="btn-delete-selected"><i class="fas fa-trash"></i> Delete Selected</button>
+        </div>
     </div>
 
     <div class="main-container">
         
         <aside class="sidebar">
             <h3>Add New Task</h3>
-            <form id="add-task-form">
+            <form id="add-task-form" novalidate>
                 <div class="form-group">
                     <label for="task-title">Title</label>
-                    <input type="text" id="task-title" placeholder="Task title" required>
+                    <input type="text" id="task-title" placeholder="Short, clear task title">
+                    <span class="error-text">This field is required.</span>
                 </div>
                 <div class="form-group">
                     <label for="task-desc">Description</label>
-                    <textarea id="task-desc" placeholder="Task description" required></textarea>
+                    <textarea id="task-desc" placeholder="Task description"></textarea>
+                    <span class="error-text">This field is required.</span>
                 </div>
                 <div class="form-group">
                     <label for="task-date">Due Date</label>
-                    <input type="date" id="task-date" required>
+                    <input type="date" id="task-date">
+                    <span class="error-text">This field is required.</span>
                 </div>
                 <div class="form-group">
                     <label for="task-priority">Priority</label>
@@ -60,7 +68,6 @@
         </aside>
 
         <div class="kanban-board">
-            
             <div class="column" id="col-todo">
                 <div class="column-header header-todo">
                     <h2>To Do</h2>
@@ -84,7 +91,61 @@
                 </div>
                 <div class="task-list" id="completed-list"></div>
             </div>
+        </div>
+    </div>
 
+    <div id="view-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>View Task</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <h4 id="view-title-display"></h4>
+                <p id="view-desc-display" class="view-desc-text"></p>
+                <div class="task-meta" style="margin-top: 20px;">
+                    <span class="due-date" id="view-date-display"></span>
+                    <span class="priority-badge" id="view-priority-display"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="edit-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Task</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="edit-task-form" novalidate>
+                    <input type="hidden" id="edit-task-id">
+                    <div class="form-group">
+                        <label for="edit-task-title">Title</label>
+                        <input type="text" id="edit-task-title" placeholder="Short, clear task title">
+                        <span class="error-text">This field is required.</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-task-desc">Description</label>
+                        <textarea id="edit-task-desc" placeholder="Task description"></textarea>
+                        <span class="error-text">This field is required.</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-task-date">Due Date</label>
+                        <input type="date" id="edit-task-date">
+                        <span class="error-text">This field is required.</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-task-priority">Priority</label>
+                        <select id="edit-task-priority">
+                            <option value="Low">Low</option>
+                            <option value="Medium">Medium</option>
+                            <option value="High">High</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-add">Update Task</button>
+                </form>
+            </div>
         </div>
     </div>
 
