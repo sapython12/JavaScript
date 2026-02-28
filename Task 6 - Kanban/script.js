@@ -39,27 +39,97 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('kanban-limits', JSON.stringify(columnLimits));
     }
 
-    // helper: simulate network delay for loader requirement
+    // helper: simulate network delay
     function simulateNetworkRequest() {
         return new Promise(resolve => setTimeout(resolve, 800));
     }
 
-    // helper: check if a column has reached its max limit
+    // helper: check column limit
     function isColumnFull(targetStatus) {
         const limit = parseInt(columnLimits[targetStatus], 10);
-        if (!limit || limit <= 0) return false; // 0 or empty means no limit
-        
-        // count only active tasks in that specific column
+        if (!limit || limit <= 0) return false; 
         const currentCount = tasks.filter(t => !t.isArchived && t.status === targetStatus).length;
         return currentCount >= limit;
     }
 
-    // format status for UI display in sweetalerts and exports
+    // format status string
     function formatStatusName(statusId) {
         if (statusId === 'todo-list') return 'To Do';
         if (statusId === 'inprogress-list') return 'In Progress';
         return 'Completed';
     }
+
+    // helper: determine due date auto highlight
+    function getDueDateStatusClass(dateStr) {
+        if (!dateStr) return '';
+        
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const [y, m, d] = dateStr.split('-');
+        const dueDate = new Date(y, m - 1, d);
+        dueDate.setHours(0, 0, 0, 0);
+        
+        if (dueDate < today) return 'status-overdue';
+        if (dueDate.getTime() === today.getTime()) return 'status-today';
+        return '';
+    }
+
+    // setup tagify
+    const addTagify = new Tagify(document.getElementById('task-tags'));
+    const editTagify = new Tagify(document.getElementById('edit-task-tags'));
+
+    // setup dynamic subtasks
+    function initSubtaskContainer(containerId) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = '';
+        addSubtaskRow(container, '', true); // initialize first row with '+'
+
+        container.addEventListener('click', (e) => {
+            if(e.target.closest('.btn-add-sub')) {
+                addSubtaskRow(container, '', false);
+            } else if(e.target.closest('.btn-remove-sub')) {
+                e.target.closest('.subtask-item').remove();
+            }
+        });
+    }
+
+    function addSubtaskRow(container, value = '', isFirst = false) {
+        const row = document.createElement('div');
+        row.className = 'subtask-item';
+        
+        const btnClass = isFirst ? 'btn-add-sub' : 'btn-remove-sub';
+        const btnIcon = isFirst ? 'fa-plus' : 'fa-minus';
+        
+        row.innerHTML = `
+            <input type="text" class="subtask-input" placeholder="Enter sub task..." value="${value}">
+            <button type="button" class="btn-subtask-action ${btnClass}">
+                <i class="fas ${btnIcon}"></i>
+            </button>
+        `;
+        container.appendChild(row);
+    }
+
+    function getSubtasksFromContainer(containerId) {
+        const inputs = document.getElementById(containerId).querySelectorAll('.subtask-input');
+        return Array.from(inputs).map(input => input.value.trim()).filter(val => val !== '');
+    }
+
+    function populateSubtasksToContainer(containerId, subtasksArr = []) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = '';
+        if (subtasksArr.length === 0) {
+            addSubtaskRow(container, '', true);
+        } else {
+            subtasksArr.forEach((task, index) => {
+                addSubtaskRow(container, task, index === 0);
+            });
+        }
+    }
+
+    // initialize base form subtasks
+    initSubtaskContainer('add-subtasks-container');
+    initSubtaskContainer('edit-subtasks-container');
 
     // dom manipulation and rendering
     const lists = {
@@ -70,8 +140,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderAllTasks() {
         Object.values(lists).forEach(list => list.innerHTML = '');
-        
-        // exclude archived tasks from the dashboard
         tasks.filter(t => !t.isArchived).forEach(task => createTaskElement(task));
         updateAllCounts();
     }
@@ -84,14 +152,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const isCompleted = task.status === 'completed-list';
         const displayPriority = isCompleted ? '✔ Done' : task.priority;
         const displayClass = isCompleted ? 'p-done' : priorityClass;
+        
+        // determine auto-highlight unless it's completed
+        const highlightClass = isCompleted ? '' : getDueDateStatusClass(task.rawDate);
 
         const card = document.createElement('div');
-        card.className = `task-card ${isCompleted ? 'completed-task' : ''}`;
+        card.className = `task-card ${isCompleted ? 'completed-task' : ''} ${highlightClass}`;
         card.draggable = true;
         card.dataset.id = task.id; 
         card.dataset.priority = task.priority; 
         card.dataset.title = task.title.toLowerCase(); 
         
+        const cardTagsHtml = (task.tags || []).length > 0 
+            ? `<div class="card-tags">${task.tags.map(t => `<span class="tag-badge">${t}</span>`).join('')}</div>` 
+            : '';
+
         card.innerHTML = `
             <div class="card-header">
                 <div class="header-left">
@@ -104,6 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <button class="action-btn delete-btn" title="Delete Task"><i class="fas fa-xmark"></i></button>
                 </div>
             </div>
+            ${cardTagsHtml}
             <p>${task.desc}</p>
             <div class="task-meta">
                 <span class="due-date">Due: ${task.dateFormatted}</span>
@@ -125,10 +201,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 title: "Are you sure?",
                 text: "Are you sure you want to delete this task?",
                 icon: "warning",
-                buttons: {
-                    cancel: true,
-                    confirm: { text: "Delete", value: true, visible: true, className: "", closeModal: false }
-                },
+                buttons: { cancel: true, confirm: { text: "Delete", value: true, visible: true, className: "", closeModal: false } },
                 dangerMode: true,
             }).then(async (willDelete) => {
                 if (willDelete) {
@@ -152,24 +225,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const archiveModal = document.getElementById('archive-modal');
     const settingsModal = document.getElementById('settings-modal');
     const exportModal = document.getElementById('export-modal');
+    const importModal = document.getElementById('import-modal');
     const closeBtns = document.querySelectorAll('.close-modal');
 
-    // close modals when clicking 'x' outside
     closeBtns.forEach(btn => btn.addEventListener('click', closeAllModals));
     window.addEventListener('click', (e) => {
-        if (e.target === viewModal || e.target === editModal || e.target === archiveModal || e.target === settingsModal || e.target === exportModal) closeAllModals();
+        if ([viewModal, editModal, archiveModal, settingsModal, exportModal, importModal].includes(e.target)) closeAllModals();
     });
 
     function closeAllModals() {
-        viewModal.style.display = 'none';
-        editModal.style.display = 'none';
-        archiveModal.style.display = 'none';
-        settingsModal.style.display = 'none';
-        exportModal.style.display = 'none';
+        [viewModal, editModal, archiveModal, settingsModal, exportModal, importModal].forEach(m => m.style.display = 'none');
         clearValidation(document.getElementById('edit-task-form'));
     }
 
-    // populate and open view modal
+    // view modal
     function openViewModal(task) {
         document.getElementById('view-title-display').textContent = task.title;
         document.getElementById('view-desc-display').textContent = task.desc;
@@ -179,10 +248,22 @@ document.addEventListener('DOMContentLoaded', () => {
         priorityBadge.textContent = task.priority;
         priorityBadge.className = 'priority-badge p-' + task.priority.toLowerCase();
         
+        const tagsHtml = (task.tags || []).map(t => `<span class="tag-badge">${t}</span>`).join('');
+        document.getElementById('view-tags-display').innerHTML = tagsHtml;
+
+        const subtasksSec = document.querySelector('.view-subtasks-section');
+        const subtasksList = document.getElementById('view-subtasks-list');
+        if (task.subtasks && task.subtasks.length > 0) {
+            subtasksList.innerHTML = task.subtasks.map(st => `<li><i class="fas fa-check-circle"></i> ${st}</li>`).join('');
+            subtasksSec.style.display = 'block';
+        } else {
+            subtasksSec.style.display = 'none';
+        }
+
         viewModal.style.display = 'flex';
     }
 
-    // populate and open edit modal
+    // edit modal
     function openEditModal(task) {
         document.getElementById('edit-task-id').value = task.id;
         document.getElementById('edit-task-title').value = task.title;
@@ -191,21 +272,31 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('edit-task-priority').value = task.priority;
         document.getElementById('edit-task-status').value = task.status; 
         
+        editTagify.removeAllTags();
+        editTagify.addTags(task.tags || []);
+        
+        populateSubtasksToContainer('edit-subtasks-container', task.subtasks || []);
+
         editModal.style.display = 'flex';
     }
 
 
-    // form validation logic
+    // form validation
     function validateForm(form) {
         let isValid = true;
-        const inputs = form.querySelectorAll('input[type="text"], input[type="date"], textarea');
+        const inputs = form.querySelectorAll('input[type="text"]:not(.subtask-input):not(.tagify__input), input[type="date"], textarea');
         
         inputs.forEach(input => {
-            if (!input.value.trim()) {
-                input.parentElement.classList.add('has-error');
-                isValid = false;
-            } else {
-                input.parentElement.classList.remove('has-error');
+            // tagify creates hidden inputs, ignore them for empty check
+            if (input.classList.contains('tagify__input')) return;
+
+            if (!input.value.trim() && input.hasAttribute('required') === false) {
+                 if(input.parentElement.querySelector('.error-text')) {
+                    if(!input.value.trim()){
+                       input.parentElement.classList.add('has-error');
+                       isValid = false;
+                    }
+                 }
             }
         });
         return isValid;
@@ -215,13 +306,215 @@ document.addEventListener('DOMContentLoaded', () => {
         form.querySelectorAll('.has-error').forEach(el => el.classList.remove('has-error'));
     }
 
-    // clear error dynamically as user types
-    document.querySelectorAll('input, textarea').forEach(input => {
+    document.querySelectorAll('input:not(.tagify__input), textarea').forEach(input => {
         input.addEventListener('input', function() {
             if(this.value.trim()) {
                 this.parentElement.classList.remove('has-error');
             }
         });
+    });
+
+    // add task submission
+    document.getElementById('add-task-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        // target standard required inputs manually to avoid complex selectors picking up tagify/subtasks
+        const titleInput = document.getElementById('task-title');
+        const descInput = document.getElementById('task-desc');
+        const dateInput = document.getElementById('task-date');
+        let isValid = true;
+        [titleInput, descInput, dateInput].forEach(inp => {
+            if(!inp.value.trim()) { inp.parentElement.classList.add('has-error'); isValid = false; }
+        });
+
+        if(!isValid) return; 
+
+        if (isColumnFull('todo-list')) {
+            swal("Limit Reached", "The 'To Do' column has reached its maximum limit.", "error");
+            return;
+        }
+
+        const submitBtn = this.querySelector('.btn-add');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+        await simulateNetworkRequest(); 
+
+        const dateObj = new Date(dateInput.value);
+        dateObj.setMinutes(dateObj.getMinutes() + dateObj.getTimezoneOffset());
+        const formattedDate = dateInput.value ? dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'No Date';
+
+        const tagValues = addTagify.value.map(t => t.value);
+        const subtasks = getSubtasksFromContainer('add-subtasks-container');
+
+        const newTask = {
+            id: Date.now().toString(),
+            title: titleInput.value,
+            desc: descInput.value,
+            rawDate: dateInput.value, 
+            dateFormatted: formattedDate,
+            priority: document.getElementById('task-priority').value,
+            tags: tagValues,
+            subtasks: subtasks,
+            status: 'todo-list',
+            isArchived: false
+        };
+
+        tasks.push(newTask);
+        saveTasksToStorage();
+        createTaskElement(newTask);
+        updateAllCounts();
+        
+        this.reset();
+        addTagify.removeAllTags();
+        populateSubtasksToContainer('add-subtasks-container', []); // reset subtasks
+        clearValidation(this);
+        document.getElementById('filter-search').value = '';
+        document.getElementById('filter-priority').value = 'All';
+        applyFilters(); 
+
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+    });
+
+    // edit task submission
+    document.getElementById('edit-task-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const titleInput = document.getElementById('edit-task-title');
+        const descInput = document.getElementById('edit-task-desc');
+        const dateInput = document.getElementById('edit-task-date');
+        let isValid = true;
+        [titleInput, descInput, dateInput].forEach(inp => {
+            if(!inp.value.trim()) { inp.parentElement.classList.add('has-error'); isValid = false; }
+        });
+
+        if(!isValid) return; 
+
+        const id = document.getElementById('edit-task-id').value;
+        const newStatus = document.getElementById('edit-task-status').value;
+        const currentTask = tasks.find(t => t.id === id);
+
+        if (currentTask && currentTask.status !== newStatus && isColumnFull(newStatus)) {
+            swal("Limit Reached", `The '${formatStatusName(newStatus)}' column has reached its maximum limit.`, "error");
+            return;
+        }
+
+        const submitBtn = this.querySelector('.btn-add');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+        await simulateNetworkRequest(); 
+
+        const dateObj = new Date(dateInput.value);
+        dateObj.setMinutes(dateObj.getMinutes() + dateObj.getTimezoneOffset());
+        const formattedDate = dateInput.value ? dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'No Date';
+
+        const tagValues = editTagify.value.map(t => t.value);
+        const subtasks = getSubtasksFromContainer('edit-subtasks-container');
+
+        const taskIndex = tasks.findIndex(t => t.id === id);
+        if (taskIndex > -1) {
+            tasks[taskIndex].title = titleInput.value;
+            tasks[taskIndex].desc = descInput.value;
+            tasks[taskIndex].rawDate = dateInput.value;
+            tasks[taskIndex].dateFormatted = formattedDate;
+            tasks[taskIndex].priority = document.getElementById('edit-task-priority').value;
+            tasks[taskIndex].tags = tagValues;
+            tasks[taskIndex].subtasks = subtasks;
+            tasks[taskIndex].status = newStatus;
+            
+            saveTasksToStorage();
+            renderAllTasks();
+            applyFilters();
+            closeAllModals();
+        }
+
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+    });
+
+    // import logic
+    document.getElementById('import-btn').addEventListener('click', () => {
+        importModal.style.display = 'flex';
+    });
+
+    document.getElementById('import-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const fileInput = document.getElementById('import-file');
+        const file = fileInput.files[0];
+        
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            const contents = e.target.result;
+            try {
+                let importedTasks = [];
+                
+                if (file.name.endsWith('.json')) {
+                    importedTasks = JSON.parse(contents);
+                } else if (file.name.endsWith('.csv')) {
+                    // robust custom csv parser
+                    let lines = [];
+                    let row = [];
+                    let inQuotes = false;
+                    let str = "";
+                    for (let i = 0; i < contents.length; i++) {
+                        let c = contents[i];
+                        let nc = contents[i+1];
+                        if (c === '"' && inQuotes && nc === '"') { str += '"'; i++; }
+                        else if (c === '"') { inQuotes = !inQuotes; }
+                        else if (c === ',' && !inQuotes) { row.push(str); str = ""; }
+                        else if (c === '\n' && !inQuotes) { row.push(str); lines.push(row); row = []; str = ""; }
+                        else if (c !== '\r') { str += c; }
+                    }
+                    if (str || row.length > 0) { row.push(str); lines.push(row); }
+
+                    // map parsed csv lines to objects
+                    if (lines.length > 1) {
+                        for(let i=1; i<lines.length; i++) {
+                            const l = lines[i];
+                            if(l.length >= 7) {
+                                // expected: ID,Title,Description,RawDate,FormattedDate,Priority,Status,Archived,Tags,Subtasks
+                                importedTasks.push({
+                                    id: l[0] || Date.now().toString() + i,
+                                    title: l[1] || 'Imported Task',
+                                    desc: l[2] || '',
+                                    rawDate: l[3] || '',
+                                    dateFormatted: l[4] || '',
+                                    priority: l[5] || 'Medium',
+                                    status: l[6] === 'To Do' ? 'todo-list' : l[6] === 'In Progress' ? 'inprogress-list' : 'completed-list',
+                                    isArchived: l[7] === 'Yes',
+                                    tags: l[8] ? JSON.parse(l[8]) : [],
+                                    subtasks: l[9] ? JSON.parse(l[9]) : []
+                                });
+                            }
+                        }
+                    }
+                }
+
+                // merge imported tasks bypassing limits to avoid blocking mass imports
+                importedTasks.forEach(it => {
+                    const exists = tasks.findIndex(t => t.id === it.id);
+                    if (exists > -1) { tasks[exists] = it; } 
+                    else { tasks.push(it); }
+                });
+
+                saveTasksToStorage();
+                renderAllTasks();
+                closeAllModals();
+                fileInput.value = '';
+                swal("Imported", `Successfully imported ${importedTasks.length} tasks.`, "success");
+
+            } catch (err) {
+                console.error(err);
+                swal("Import Failed", "Failed to parse the file. Please ensure it's a valid format.", "error");
+            }
+        };
+        reader.readAsText(file);
     });
 
     // export logic
@@ -246,19 +539,23 @@ document.addEventListener('DOMContentLoaded', () => {
             fileName = `Kanban_Tasks_${new Date().toISOString().slice(0,10)}.json`;
             mimeType = 'application/json';
         } else if (format === 'csv') {
-            // prepare CSV headers
-            const headers = ['ID', 'Title', 'Description', 'Due Date', 'Priority', 'Status', 'Archived'];
+            const headers = ['ID', 'Title', 'Description', 'RawDate', 'FormattedDate', 'Priority', 'Status', 'Archived', 'Tags', 'Subtasks'];
             
-            // map tasks to rows, handle commas and quotes inside text
             const rows = tasks.map(t => {
+                const tagsStr = t.tags && t.tags.length ? JSON.stringify(t.tags).replace(/"/g, '""') : '[]';
+                const subStr = t.subtasks && t.subtasks.length ? JSON.stringify(t.subtasks).replace(/"/g, '""') : '[]';
+                
                 return [
                     t.id,
                     `"${t.title.replace(/"/g, '""')}"`,
                     `"${t.desc.replace(/"/g, '""')}"`,
+                    t.rawDate,
                     t.dateFormatted,
                     t.priority,
                     formatStatusName(t.status),
-                    t.isArchived ? 'Yes' : 'No'
+                    t.isArchived ? 'Yes' : 'No',
+                    `"${tagsStr}"`,
+                    `"${subStr}"`
                 ].join(',');
             });
 
@@ -267,7 +564,6 @@ document.addEventListener('DOMContentLoaded', () => {
             mimeType = 'text/csv;charset=utf-8;';
         }
 
-        // trigger browser download
         const blob = new Blob([fileContent], { type: mimeType });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
@@ -297,112 +593,7 @@ document.addEventListener('DOMContentLoaded', () => {
         saveLimitsToStorage();
         closeAllModals();
         swal("Saved", "Board settings have been updated successfully.", "success");
-        updateAllCounts(); // refresh visual indicators
-    });
-
-    // add and edit form submission
-    document.getElementById('add-task-form').addEventListener('submit', async function(e) {
-        e.preventDefault();
-
-        if(!validateForm(this)) return; 
-
-        // apply limit on add
-        if (isColumnFull('todo-list')) {
-            swal("Limit Reached", "The 'To Do' column has reached its maximum limit.", "error");
-            return;
-        }
-
-        const submitBtn = this.querySelector('.btn-add');
-        const originalText = submitBtn.innerHTML;
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-
-        await simulateNetworkRequest(); 
-
-        const title = document.getElementById('task-title').value;
-        const desc = document.getElementById('task-desc').value;
-        const dateStr = document.getElementById('task-date').value;
-        const priority = document.getElementById('task-priority').value;
-
-        const dateObj = new Date(dateStr);
-        dateObj.setMinutes(dateObj.getMinutes() + dateObj.getTimezoneOffset());
-        const formattedDate = dateStr ? dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'No Date';
-
-        const newTask = {
-            id: Date.now().toString(),
-            title: title,
-            desc: desc,
-            rawDate: dateStr, 
-            dateFormatted: formattedDate,
-            priority: priority,
-            status: 'todo-list',
-            isArchived: false
-        };
-
-        tasks.push(newTask);
-        saveTasksToStorage();
-        createTaskElement(newTask);
-        updateAllCounts();
-        
-        this.reset();
-        clearValidation(this);
-        document.getElementById('filter-search').value = '';
-        document.getElementById('filter-priority').value = 'All';
-        applyFilters(); 
-
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalText;
-    });
-
-    document.getElementById('edit-task-form').addEventListener('submit', async function(e) {
-        e.preventDefault();
-
-        if(!validateForm(this)) return; 
-
-        const id = document.getElementById('edit-task-id').value;
-        const newStatus = document.getElementById('edit-task-status').value;
-        const currentTask = tasks.find(t => t.id === id);
-
-        // apply limit on edit (if status changes to a full column)
-        if (currentTask && currentTask.status !== newStatus && isColumnFull(newStatus)) {
-            swal("Limit Reached", `The '${formatStatusName(newStatus)}' column has reached its maximum limit.`, "error");
-            return;
-        }
-
-        const submitBtn = this.querySelector('.btn-add');
-        const originalText = submitBtn.innerHTML;
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-
-        await simulateNetworkRequest(); 
-
-        const title = document.getElementById('edit-task-title').value;
-        const desc = document.getElementById('edit-task-desc').value;
-        const dateStr = document.getElementById('edit-task-date').value;
-        const priority = document.getElementById('edit-task-priority').value;
-
-        const dateObj = new Date(dateStr);
-        dateObj.setMinutes(dateObj.getMinutes() + dateObj.getTimezoneOffset());
-        const formattedDate = dateStr ? dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'No Date';
-
-        // update the task in array
-        const taskIndex = tasks.findIndex(t => t.id === id);
-        if (taskIndex > -1) {
-            tasks[taskIndex].title = title;
-            tasks[taskIndex].desc = desc;
-            tasks[taskIndex].rawDate = dateStr;
-            tasks[taskIndex].dateFormatted = formattedDate;
-            tasks[taskIndex].priority = priority;
-            tasks[taskIndex].status = newStatus;
-            
-            saveTasksToStorage();
-            renderAllTasks();
-            applyFilters();
-            closeAllModals();
-        }
-
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalText;
+        updateAllCounts(); 
     });
 
     // main board bulk actions
@@ -417,18 +608,13 @@ document.addEventListener('DOMContentLoaded', () => {
             title: "Archive Tasks?",
             text: `You are about to archive ${checkedBoxes.length} task(s). They will be hidden from the board.`,
             icon: "info",
-            buttons: {
-                cancel: true,
-                confirm: { text: "Archive", value: true, visible: true, className: "", closeModal: false }
-            },
+            buttons: { cancel: true, confirm: { text: "Archive", value: true, visible: true, className: "", closeModal: false } },
         }).then(async (willArchive) => {
             if (willArchive) {
                 await simulateNetworkRequest(); 
 
                 const idsToArchive = Array.from(checkedBoxes).map(cb => cb.value);
-                tasks.forEach(t => {
-                    if (idsToArchive.includes(t.id)) t.isArchived = true;
-                });
+                tasks.forEach(t => { if (idsToArchive.includes(t.id)) t.isArchived = true; });
                 
                 saveTasksToStorage();
                 renderAllTasks();
@@ -450,10 +636,7 @@ document.addEventListener('DOMContentLoaded', () => {
             title: "Are you sure?",
             text: `You are about to delete ${checkedBoxes.length} selected task(s).`,
             icon: "warning",
-            buttons: {
-                cancel: true,
-                confirm: { text: "Delete All", value: true, visible: true, className: "", closeModal: false }
-            },
+            buttons: { cancel: true, confirm: { text: "Delete All", value: true, visible: true, className: "", closeModal: false } },
             dangerMode: true,
         }).then(async (willDelete) => {
             if (willDelete) {
@@ -508,13 +691,11 @@ document.addEventListener('DOMContentLoaded', () => {
             archiveListContainer.appendChild(item);
         });
 
-        // individual restore logic
         archiveListContainer.querySelectorAll('.archived-btn-restore').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 const id = e.currentTarget.dataset.id;
                 const task = tasks.find(t => t.id === id);
                 
-                // apply limit on restore from archive
                 if (task && isColumnFull(task.status)) {
                     swal("Limit Reached", `Cannot restore. The target column '${formatStatusName(task.status)}' is full.`, "error");
                     return;
@@ -536,7 +717,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // individual permanent delete logic
         archiveListContainer.querySelectorAll('.archived-btn-delete').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const id = e.currentTarget.dataset.id;
@@ -544,10 +724,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     title: "Delete Permanently?",
                     text: "This action cannot be undone.",
                     icon: "warning",
-                    buttons: {
-                        cancel: true,
-                        confirm: { text: "Delete", value: true, visible: true, className: "", closeModal: false }
-                    },
+                    buttons: { cancel: true, confirm: { text: "Delete", value: true, visible: true, className: "", closeModal: false } },
                     dangerMode: true,
                 }).then(async (willDelete) => {
                     if (willDelete) {
@@ -562,7 +739,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // archive modal bulk actions
     document.getElementById('archive-restore-selected-btn').addEventListener('click', () => {
         const checkedBoxes = document.querySelectorAll('.archive-checkbox:checked');
         if (checkedBoxes.length === 0) {
@@ -570,7 +746,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // apply limits logic for bulk restoring
         const idsToRestore = Array.from(checkedBoxes).map(cb => cb.value);
         let columnsIncomingCount = { 'todo-list': 0, 'inprogress-list': 0, 'completed-list': 0 };
         
@@ -602,18 +777,11 @@ document.addEventListener('DOMContentLoaded', () => {
             title: "Restore Tasks?",
             text: `You are about to restore ${checkedBoxes.length} task(s) to the board.`,
             icon: "info",
-            buttons: {
-                cancel: true,
-                confirm: { text: "Restore Selected", value: true, visible: true, className: "", closeModal: false }
-            },
+            buttons: { cancel: true, confirm: { text: "Restore Selected", value: true, visible: true, className: "", closeModal: false } },
         }).then(async (willRestore) => {
             if (willRestore) {
                 await simulateNetworkRequest(); 
-
-                tasks.forEach(t => {
-                    if (idsToRestore.includes(t.id)) t.isArchived = false;
-                });
-                
+                tasks.forEach(t => { if (idsToRestore.includes(t.id)) t.isArchived = false; });
                 saveTasksToStorage();
                 renderArchiveList();
                 renderAllTasks();
@@ -634,18 +802,13 @@ document.addEventListener('DOMContentLoaded', () => {
             title: "Delete Permanently?",
             text: `You are about to permanently delete ${checkedBoxes.length} selected task(s).`,
             icon: "warning",
-            buttons: {
-                cancel: true,
-                confirm: { text: "Delete Selected", value: true, visible: true, className: "", closeModal: false }
-            },
+            buttons: { cancel: true, confirm: { text: "Delete Selected", value: true, visible: true, className: "", closeModal: false } },
             dangerMode: true,
         }).then(async (willDelete) => {
             if (willDelete) {
                 await simulateNetworkRequest(); 
-
                 const idsToDelete = Array.from(checkedBoxes).map(cb => cb.value);
                 tasks = tasks.filter(t => !idsToDelete.includes(t.id));
-                
                 saveTasksToStorage();
                 renderArchiveList(); 
                 swal.close();
@@ -659,9 +822,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function addDragEvents(card) {
         card.addEventListener('dragstart', function(e) {
-            // prevent dragging if clicking buttons or checkboxes
             if(e.target.closest('.action-btn') || e.target.type === 'checkbox') return; 
-            
             draggedItem = card;
             setTimeout(() => card.classList.add('dragging'), 0);
         });
@@ -676,15 +837,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     Object.values(lists).forEach(list => {
-        list.addEventListener('dragover', function(e) {
-            e.preventDefault(); 
-            this.classList.add('drag-over');
-        });
-
-        list.addEventListener('dragleave', function() {
-            this.classList.remove('drag-over');
-        });
-
+        list.addEventListener('dragover', function(e) { e.preventDefault(); this.classList.add('drag-over'); });
+        list.addEventListener('dragleave', function() { this.classList.remove('drag-over'); });
         list.addEventListener('drop', function() {
             this.classList.remove('drag-over');
             if (draggedItem) {
@@ -695,10 +849,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (taskIndex > -1) {
                     const currentStatus = tasks[taskIndex].status;
                     
-                    // apply limit on drag & drop
                     if (currentStatus !== newStatus && isColumnFull(newStatus)) {
                         swal("Limit Reached", `The '${formatStatusName(newStatus)}' column has reached its maximum limit.`, "error");
-                        renderAllTasks(); // reverts visual UI state instantly
+                        renderAllTasks(); 
                         return;
                     }
 
@@ -741,12 +894,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // counters logic
     function updateAllCounts() {
         document.querySelectorAll('.column').forEach(col => {
-            const visibleCards = Array.from(col.querySelectorAll('.task-card'))
-                                      .filter(card => card.style.display !== 'none');
-            
+            const visibleCards = Array.from(col.querySelectorAll('.task-card')).filter(card => card.style.display !== 'none');
             const countSpan = col.querySelector('.task-count');
-            
-            // check if column has a limit set to display eg "2/5 Tasks"
             const statusId = col.id.replace('col-', '') + '-list';
             const limit = parseInt(columnLimits[statusId], 10);
             
