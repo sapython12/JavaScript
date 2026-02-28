@@ -24,11 +24,11 @@ body { background-color: #f4f5f8; color: #1e293b; }
 .main-container { display: flex; gap: 20px; padding: 20px; max-width: 1200px; margin: 0 auto; align-items: flex-start;}
 
 /* sidebar form */
-.sidebar { width: 260px; padding: 20px; border-radius: 6px; border: 1px solid #e2e8f0; flex-shrink: 0; background-color: #ffffff; }
+.sidebar { width: 280px; padding: 20px; border-radius: 6px; border: 1px solid #e2e8f0; flex-shrink: 0; background-color: #ffffff; }
 .sidebar h3 { font-size: 16px; margin-bottom: 16px; font-weight: 600; }
 .form-group { margin-bottom: 16px; position: relative; }
 .form-group label { display: block; font-size: 13px; margin-bottom: 6px; font-weight: 500; }
-.form-group input, .form-group textarea, .form-group select { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #cbd5e1; font-size: 13px; outline: none; background-color: #ffffff; color: #1e293b; transition: border-color 0.2s; }
+.form-group input:not([type="checkbox"]):not([type="file"]), .form-group textarea, .form-group select { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #cbd5e1; font-size: 13px; outline: none; background-color: #ffffff; color: #1e293b; transition: border-color 0.2s; }
 .form-group input:focus, .form-group textarea:focus { border-color: #4285f4; }
 .form-group textarea { resize: vertical; min-height: 60px; }
 .btn-add { width: 100%; padding: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 14px; transition: opacity 0.2s; background-color: #4285f4; color: white; display: flex; justify-content: center; align-items: center; gap: 8px; }
@@ -58,8 +58,10 @@ body { background-color: #f4f5f8; color: #1e293b; }
 .task-list::-webkit-scrollbar-thumb { border-radius: 3px; background-color: #cbd5e1; }
 .task-list.drag-over { background-color: #e2e8f0; border: 2px dashed #94a3b8; }
 
-/* task cards */
+/* task cards & status highlights */
 .task-card { border-radius: 6px; padding: 16px; cursor: grab; border: 1px solid #e2e8f0; transition: transform 0.1s ease; background-color: white; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+.task-card.status-overdue { border: 2px solid #d9534f; }
+.task-card.status-today { border: 2px solid #f0ad4e; }
 .task-card:active { cursor: grabbing; }
 
 /* card header & actions */
@@ -73,7 +75,7 @@ body { background-color: #f4f5f8; color: #1e293b; }
 .action-btn:hover { color: #4285f4; background-color: #e2e8f0; }
 .delete-btn:hover { color: #d9534f; background-color: #fee2e2; }
 
-.task-card p { font-size: 13px; margin-bottom: 16px; line-height: 1.4; color: #64748b; }
+.task-card p { font-size: 13px; margin-bottom: 12px; line-height: 1.4; color: #64748b; }
 .task-card.dragging { opacity: 0.5; transform: scale(0.98); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
 .completed-task .header-left h4, .completed-task p { text-decoration: line-through; opacity: 0.7; }
 
@@ -88,16 +90,32 @@ body { background-color: #f4f5f8; color: #1e293b; }
 
 /* modals */
 .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
-.modal-content { background: white; width: 90%; max-width: 400px; border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); display: flex; flex-direction: column; overflow: hidden; }
+.modal-content { background: white; width: 90%; max-width: 450px; border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); display: flex; flex-direction: column; overflow: hidden; max-height: 90vh; }
 .modal-header { padding: 16px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background-color: #f8f9fa; }
 .modal-header h3 { font-size: 16px; font-weight: 600; color: #1e293b; }
 .close-modal { background: none; border: none; font-size: 18px; cursor: pointer; color: #94a3b8; }
 .close-modal:hover { color: #d9534f; }
-.modal-body { padding: 20px; }
+.modal-body { padding: 20px; overflow-y: auto; }
 .view-desc-text { font-size: 14px; color: #64748b; margin-top: 10px; line-height: 1.5; white-space: pre-wrap; }
 
-/* settings */
+/* settings & tags */
 .settings-hint { font-size: 13px; color: #64748b; margin-bottom: 15px; line-height: 1.4; }
+.tagify { --tags-border-color: #cbd5e1; --tags-hover-border-color: #4285f4; --tags-focus-border-color: #4285f4; border-radius: 4px; font-size: 13px; }
+.tags-display-area { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.tag-badge { background-color: #e2e8f0; color: #334155; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+.card-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
+
+/* subtasks ui */
+.subtask-item { display: flex; gap: 8px; margin-bottom: 8px; }
+.btn-subtask-action { color: white; border: none; border-radius: 4px; width: 34px; height: 34px; flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; font-size: 14px;}
+.btn-add-sub { background-color: #4285f4; }
+.btn-add-sub:hover { background-color: #2b5db0; }
+.btn-remove-sub { background-color: #d9534f; }
+.btn-remove-sub:hover { background-color: #c9302c; }
+.view-subtasks-section h5 { font-size: 14px; margin-bottom: 8px; color: #1e293b; }
+.view-subtasks-list { list-style-type: none; padding-left: 0; margin: 0; }
+.view-subtasks-list li { padding: 6px 0; border-bottom: 1px solid #e2e8f0; font-size: 13px; color: #64748b; display: flex; align-items: flex-start; gap: 8px; }
+.view-subtasks-list li i { color: #4285f4; margin-top: 3px; font-size: 10px; }
 
 /* archive styles */
 .archive-bulk-actions { display: flex; gap: 10px; margin-bottom: 15px; justify-content: flex-end; }
