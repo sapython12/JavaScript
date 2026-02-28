@@ -15,6 +15,8 @@
             <span>Task Board</span>
         </div>
         <div class="nav-actions">
+            <button id="export-btn" class="btn-nav"><i class="fas fa-file-export"></i> Export</button>
+            <button id="settings-btn" class="btn-nav"><i class="fas fa-cog"></i> Settings</button>
             <button id="view-archive-btn" class="btn-nav"><i class="fas fa-archive"></i> View Archive</button>
             <button id="theme-toggle" aria-label="Toggle Theme"><i class="fas fa-moon"></i></button>
         </div>
@@ -47,17 +49,17 @@
                 <div class="form-group">
                     <label for="task-title">Title</label>
                     <input type="text" id="task-title" placeholder="Short, clear task title">
-                    <span class="error-text">This field is required.</span>
+                    <span class="error-text">This field is required</span>
                 </div>
                 <div class="form-group">
                     <label for="task-desc">Description</label>
                     <textarea id="task-desc" placeholder="Task description"></textarea>
-                    <span class="error-text">This field is required.</span>
+                    <span class="error-text">This field is required</span>
                 </div>
                 <div class="form-group">
                     <label for="task-date">Due Date</label>
                     <input type="date" id="task-date">
-                    <span class="error-text">This field is required.</span>
+                    <span class="error-text">This field is required</span>
                 </div>
                 <div class="form-group">
                     <label for="task-priority">Priority</label>
@@ -102,7 +104,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3>View Task</h3>
-                <button class="close-modal">&times;</button>
+                <button class="close-modal"><i class="fas fa-xmark"></i></button>
             </div>
             <div class="modal-body">
                 <h4 id="view-title-display"></h4>
@@ -119,7 +121,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3>Edit Task</h3>
-                <button class="close-modal">&times;</button>
+                <button class="close-modal"><i class="fas fa-xmark"></i></button>
             </div>
             <div class="modal-body">
                 <form id="edit-task-form" novalidate>
@@ -127,17 +129,17 @@
                     <div class="form-group">
                         <label for="edit-task-title">Title</label>
                         <input type="text" id="edit-task-title" placeholder="Short, clear task title">
-                        <span class="error-text">This field is required.</span>
+                        <span class="error-text">This field is required</span>
                     </div>
                     <div class="form-group">
                         <label for="edit-task-desc">Description</label>
                         <textarea id="edit-task-desc" placeholder="Task description"></textarea>
-                        <span class="error-text">This field is required.</span>
+                        <span class="error-text">This field is required</span>
                     </div>
                     <div class="form-group">
                         <label for="edit-task-date">Due Date</label>
                         <input type="date" id="edit-task-date">
-                        <span class="error-text">This field is required.</span>
+                        <span class="error-text">This field is required</span>
                     </div>
                     <div class="form-group">
                         <label for="edit-task-priority">Priority</label>
@@ -145,6 +147,14 @@
                             <option value="Low">Low</option>
                             <option value="Medium">Medium</option>
                             <option value="High">High</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-task-status">Status</label>
+                        <select id="edit-task-status">
+                            <option value="todo-list">To Do</option>
+                            <option value="inprogress-list">In Progress</option>
+                            <option value="completed-list">Completed</option>
                         </select>
                     </div>
                     <button type="submit" class="btn-add">Update Task</button>
@@ -157,10 +167,64 @@
         <div class="modal-content" style="max-width: 500px;">
             <div class="modal-header">
                 <h3>Archived Tasks</h3>
-                <button class="close-modal">&times;</button>
+                <button class="close-modal"><i class="fas fa-xmark"></i></button>
             </div>
-            <div class="modal-body" id="archive-list-container" style="max-height: 400px; overflow-y: auto;">
+            <div class="modal-body">
+                <div class="archive-bulk-actions">
+                    <button id="archive-restore-selected-btn" class="btn-archive-selected"><i class="fas fa-rotate-left"></i> Restore Selected</button>
+                    <button id="archive-delete-selected-btn" class="btn-delete-selected"><i class="fas fa-trash"></i> Delete Selected</button>
                 </div>
+                <div id="archive-list-container" style="max-height: 350px; overflow-y: auto;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="settings-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Board Settings</h3>
+                <button class="close-modal"><i class="fas fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="settings-form">
+                    <p class="settings-hint">Set maximum task limits for each column (leave empty or 0 for no limit).</p>
+                    <div class="form-group">
+                        <label for="limit-todo">Max Tasks: To Do</label>
+                        <input type="number" id="limit-todo" min="0" placeholder="No limit">
+                    </div>
+                    <div class="form-group">
+                        <label for="limit-inprogress">Max Tasks: In Progress</label>
+                        <input type="number" id="limit-inprogress" min="0" placeholder="No limit">
+                    </div>
+                    <div class="form-group">
+                        <label for="limit-completed">Max Tasks: Completed</label>
+                        <input type="number" id="limit-completed" min="0" placeholder="No limit">
+                    </div>
+                    <button type="submit" class="btn-add">Save Settings</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="export-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Export Tasks</h3>
+                <button class="close-modal"><i class="fas fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="export-form">
+                    <div class="form-group">
+                        <label for="export-format">Select Format</label>
+                        <select id="export-format">
+                            <option value="json">JSON (.json)</option>
+                            <option value="csv">CSV (.csv)</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-add"><i class="fas fa-download"></i> Download File</button>
+                </form>
+            </div>
         </div>
     </div>
 
