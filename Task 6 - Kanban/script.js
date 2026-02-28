@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     
-    // toogle theme logic
+    // toggle theme logic
     const themeStyle = document.getElementById('theme-style');
     const themeToggle = document.getElementById('theme-toggle');
     const savedTheme = localStorage.getItem('kanban-theme') || 'light';
@@ -25,14 +25,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // state management (localstorage)
     let tasks = JSON.parse(localStorage.getItem('kanban-data')) || [];
+    let columnLimits = JSON.parse(localStorage.getItem('kanban-limits')) || {
+        'todo-list': 0,
+        'inprogress-list': 0,
+        'completed-list': 0
+    };
 
     function saveTasksToStorage() {
         localStorage.setItem('kanban-data', JSON.stringify(tasks));
     }
 
-    // Helper: Simulate network delay for the loader requirement
+    function saveLimitsToStorage() {
+        localStorage.setItem('kanban-limits', JSON.stringify(columnLimits));
+    }
+
+    // helper: simulate network delay for loader requirement
     function simulateNetworkRequest() {
         return new Promise(resolve => setTimeout(resolve, 800));
+    }
+
+    // helper: check if a column has reached its max limit
+    function isColumnFull(targetStatus) {
+        const limit = parseInt(columnLimits[targetStatus], 10);
+        if (!limit || limit <= 0) return false; // 0 or empty means no limit
+        
+        // count only active tasks in that specific column
+        const currentCount = tasks.filter(t => !t.isArchived && t.status === targetStatus).length;
+        return currentCount >= limit;
+    }
+
+    // format status for UI display in sweetalerts and exports
+    function formatStatusName(statusId) {
+        if (statusId === 'todo-list') return 'To Do';
+        if (statusId === 'inprogress-list') return 'In Progress';
+        return 'Completed';
     }
 
     // dom manipulation and rendering
@@ -45,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderAllTasks() {
         Object.values(lists).forEach(list => list.innerHTML = '');
         
-        // Exclude archived tasks from the dashboard
+        // exclude archived tasks from the dashboard
         tasks.filter(t => !t.isArchived).forEach(task => createTaskElement(task));
         updateAllCounts();
     }
@@ -75,7 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="header-actions">
                     <button class="action-btn view-btn" title="View"><i class="fas fa-eye"></i></button>
                     <button class="action-btn edit-btn" title="Edit"><i class="fas fa-pen"></i></button>
-                    <button class="action-btn delete-btn" title="Delete Task">&times;</button>
+                    <button class="action-btn delete-btn" title="Delete Task"><i class="fas fa-xmark"></i></button>
                 </div>
             </div>
             <p>${task.desc}</p>
@@ -95,20 +121,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const deleteBtn = card.querySelector('.delete-btn');
         deleteBtn.addEventListener('click', function(e) {
             e.stopPropagation(); 
-            // the sweetalert library
             swal({
                 title: "Are you sure?",
                 text: "Are you sure you want to delete this task?",
                 icon: "warning",
                 buttons: {
                     cancel: true,
-                    // closeModal: false activates SweetAlert's native loading spinner on the button
                     confirm: { text: "Delete", value: true, visible: true, className: "", closeModal: false }
                 },
                 dangerMode: true,
             }).then(async (willDelete) => {
                 if (willDelete) {
-                    await simulateNetworkRequest(); // Loader simulation
+                    await simulateNetworkRequest(); 
                     tasks = tasks.filter(t => t.id !== task.id);
                     saveTasksToStorage();
                     renderAllTasks();
@@ -126,22 +150,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const viewModal = document.getElementById('view-modal');
     const editModal = document.getElementById('edit-modal');
     const archiveModal = document.getElementById('archive-modal');
+    const settingsModal = document.getElementById('settings-modal');
+    const exportModal = document.getElementById('export-modal');
     const closeBtns = document.querySelectorAll('.close-modal');
 
     // close modals when clicking 'x' outside
     closeBtns.forEach(btn => btn.addEventListener('click', closeAllModals));
     window.addEventListener('click', (e) => {
-        if (e.target === viewModal || e.target === editModal || e.target === archiveModal) closeAllModals();
+        if (e.target === viewModal || e.target === editModal || e.target === archiveModal || e.target === settingsModal || e.target === exportModal) closeAllModals();
     });
 
     function closeAllModals() {
         viewModal.style.display = 'none';
         editModal.style.display = 'none';
         archiveModal.style.display = 'none';
+        settingsModal.style.display = 'none';
+        exportModal.style.display = 'none';
         clearValidation(document.getElementById('edit-task-form'));
     }
 
-    // populate and open modal
+    // populate and open view modal
     function openViewModal(task) {
         document.getElementById('view-title-display').textContent = task.title;
         document.getElementById('view-desc-display').textContent = task.desc;
@@ -161,6 +189,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('edit-task-desc').value = task.desc;
         document.getElementById('edit-task-date').value = task.rawDate; 
         document.getElementById('edit-task-priority').value = task.priority;
+        document.getElementById('edit-task-status').value = task.status; 
         
         editModal.style.display = 'flex';
     }
@@ -195,19 +224,100 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // export logic
+    document.getElementById('export-btn').addEventListener('click', () => {
+        exportModal.style.display = 'flex';
+    });
+
+    document.getElementById('export-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const format = document.getElementById('export-format').value;
+        
+        if (tasks.length === 0) {
+            swal("No Data", "There are no tasks to export.", "info");
+            closeAllModals();
+            return;
+        }
+
+        let fileContent, fileName, mimeType;
+
+        if (format === 'json') {
+            fileContent = JSON.stringify(tasks, null, 2);
+            fileName = `Kanban_Tasks_${new Date().toISOString().slice(0,10)}.json`;
+            mimeType = 'application/json';
+        } else if (format === 'csv') {
+            // prepare CSV headers
+            const headers = ['ID', 'Title', 'Description', 'Due Date', 'Priority', 'Status', 'Archived'];
+            
+            // map tasks to rows, handle commas and quotes inside text
+            const rows = tasks.map(t => {
+                return [
+                    t.id,
+                    `"${t.title.replace(/"/g, '""')}"`,
+                    `"${t.desc.replace(/"/g, '""')}"`,
+                    t.dateFormatted,
+                    t.priority,
+                    formatStatusName(t.status),
+                    t.isArchived ? 'Yes' : 'No'
+                ].join(',');
+            });
+
+            fileContent = [headers.join(','), ...rows].join('\n');
+            fileName = `Kanban_Tasks_${new Date().toISOString().slice(0,10)}.csv`;
+            mimeType = 'text/csv;charset=utf-8;';
+        }
+
+        // trigger browser download
+        const blob = new Blob([fileContent], { type: mimeType });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(link.href);
+
+        closeAllModals();
+    });
+
+    // settings logic
+    document.getElementById('settings-btn').addEventListener('click', () => {
+        document.getElementById('limit-todo').value = columnLimits['todo-list'] || '';
+        document.getElementById('limit-inprogress').value = columnLimits['inprogress-list'] || '';
+        document.getElementById('limit-completed').value = columnLimits['completed-list'] || '';
+        settingsModal.style.display = 'flex';
+    });
+
+    document.getElementById('settings-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        columnLimits['todo-list'] = parseInt(document.getElementById('limit-todo').value) || 0;
+        columnLimits['inprogress-list'] = parseInt(document.getElementById('limit-inprogress').value) || 0;
+        columnLimits['completed-list'] = parseInt(document.getElementById('limit-completed').value) || 0;
+        
+        saveLimitsToStorage();
+        closeAllModals();
+        swal("Saved", "Board settings have been updated successfully.", "success");
+        updateAllCounts(); // refresh visual indicators
+    });
 
     // add and edit form submission
     document.getElementById('add-task-form').addEventListener('submit', async function(e) {
         e.preventDefault();
 
-        if(!validateForm(this)) return; // stop if validation fails
+        if(!validateForm(this)) return; 
+
+        // apply limit on add
+        if (isColumnFull('todo-list')) {
+            swal("Limit Reached", "The 'To Do' column has reached its maximum limit.", "error");
+            return;
+        }
 
         const submitBtn = this.querySelector('.btn-add');
         const originalText = submitBtn.innerHTML;
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
 
-        await simulateNetworkRequest(); // Loader simulation
+        await simulateNetworkRequest(); 
 
         const title = document.getElementById('task-title').value;
         const desc = document.getElementById('task-desc').value;
@@ -247,16 +357,25 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('edit-task-form').addEventListener('submit', async function(e) {
         e.preventDefault();
 
-        if(!validateForm(this)) return; // stop if validation fails
+        if(!validateForm(this)) return; 
+
+        const id = document.getElementById('edit-task-id').value;
+        const newStatus = document.getElementById('edit-task-status').value;
+        const currentTask = tasks.find(t => t.id === id);
+
+        // apply limit on edit (if status changes to a full column)
+        if (currentTask && currentTask.status !== newStatus && isColumnFull(newStatus)) {
+            swal("Limit Reached", `The '${formatStatusName(newStatus)}' column has reached its maximum limit.`, "error");
+            return;
+        }
 
         const submitBtn = this.querySelector('.btn-add');
         const originalText = submitBtn.innerHTML;
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
 
-        await simulateNetworkRequest(); // Loader simulation
+        await simulateNetworkRequest(); 
 
-        const id = document.getElementById('edit-task-id').value;
         const title = document.getElementById('edit-task-title').value;
         const desc = document.getElementById('edit-task-desc').value;
         const dateStr = document.getElementById('edit-task-date').value;
@@ -274,6 +393,7 @@ document.addEventListener('DOMContentLoaded', () => {
             tasks[taskIndex].rawDate = dateStr;
             tasks[taskIndex].dateFormatted = formattedDate;
             tasks[taskIndex].priority = priority;
+            tasks[taskIndex].status = newStatus;
             
             saveTasksToStorage();
             renderAllTasks();
@@ -285,7 +405,7 @@ document.addEventListener('DOMContentLoaded', () => {
         submitBtn.innerHTML = originalText;
     });
 
-    // archive selected tasks
+    // main board bulk actions
     document.getElementById('archive-selected-btn').addEventListener('click', () => {
         const checkedBoxes = document.querySelectorAll('.task-checkbox:checked');
         if (checkedBoxes.length === 0) {
@@ -303,7 +423,7 @@ document.addEventListener('DOMContentLoaded', () => {
             },
         }).then(async (willArchive) => {
             if (willArchive) {
-                await simulateNetworkRequest(); // Loader simulation
+                await simulateNetworkRequest(); 
 
                 const idsToArchive = Array.from(checkedBoxes).map(cb => cb.value);
                 tasks.forEach(t => {
@@ -319,7 +439,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // delete selected tasks
     document.getElementById('delete-selected-btn').addEventListener('click', () => {
         const checkedBoxes = document.querySelectorAll('.task-checkbox:checked');
         if (checkedBoxes.length === 0) {
@@ -338,12 +457,9 @@ document.addEventListener('DOMContentLoaded', () => {
             dangerMode: true,
         }).then(async (willDelete) => {
             if (willDelete) {
-                await simulateNetworkRequest(); // Loader simulation
+                await simulateNetworkRequest(); 
 
-                // get ids of all checked items
                 const idsToDelete = Array.from(checkedBoxes).map(cb => cb.value);
-                
-                // filter them out of the main array
                 tasks = tasks.filter(t => !idsToDelete.includes(t.id));
                 
                 saveTasksToStorage();
@@ -354,7 +470,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // archive view and restore logic
+    // archive view and individual/bulk logic
     const archiveListContainer = document.getElementById('archive-list-container');
 
     document.getElementById('view-archive-btn').addEventListener('click', () => {
@@ -372,17 +488,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         archivedTasks.forEach(task => {
-            let statusDisplay = task.status.replace('-list', '');
-            if (statusDisplay === 'todo') statusDisplay = 'To Do';
-            if (statusDisplay === 'inprogress') statusDisplay = 'In Progress';
-            if (statusDisplay === 'completed') statusDisplay = 'Completed';
+            let statusDisplay = formatStatusName(task.status);
 
             const item = document.createElement('div');
             item.className = 'archived-item';
             item.innerHTML = `
                 <div class="archived-item-info">
-                    <h4>${task.title}</h4>
-                    <p>Status: <strong>${statusDisplay}</strong> | Priority: <strong>${task.priority}</strong></p>
+                    <input type="checkbox" class="archive-checkbox" value="${task.id}">
+                    <div>
+                        <h4>${task.title}</h4>
+                        <p>Status: <strong>${statusDisplay}</strong> | Priority: <strong>${task.priority}</strong></p>
+                    </div>
                 </div>
                 <div class="archived-item-actions">
                     <button class="archived-btn-restore" data-id="${task.id}" title="Restore Task"><i class="fas fa-rotate-left"></i> Restore</button>
@@ -392,11 +508,17 @@ document.addEventListener('DOMContentLoaded', () => {
             archiveListContainer.appendChild(item);
         });
 
-        // Add Listeners to Restore Buttons
+        // individual restore logic
         archiveListContainer.querySelectorAll('.archived-btn-restore').forEach(btn => {
             btn.addEventListener('click', async (e) => {
-                // IMPORTANT FIX: Grab the ID before the 'await'
                 const id = e.currentTarget.dataset.id;
+                const task = tasks.find(t => t.id === id);
+                
+                // apply limit on restore from archive
+                if (task && isColumnFull(task.status)) {
+                    swal("Limit Reached", `Cannot restore. The target column '${formatStatusName(task.status)}' is full.`, "error");
+                    return;
+                }
                 
                 const originalText = btn.innerHTML;
                 btn.disabled = true;
@@ -404,7 +526,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 await simulateNetworkRequest();
 
-                const task = tasks.find(t => t.id === id);
                 if(task) {
                     task.isArchived = false;
                     saveTasksToStorage();
@@ -415,7 +536,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // Add Listeners to Permanent Delete Buttons
+        // individual permanent delete logic
         archiveListContainer.querySelectorAll('.archived-btn-delete').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const id = e.currentTarget.dataset.id;
@@ -441,7 +562,99 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // drag and drop
+    // archive modal bulk actions
+    document.getElementById('archive-restore-selected-btn').addEventListener('click', () => {
+        const checkedBoxes = document.querySelectorAll('.archive-checkbox:checked');
+        if (checkedBoxes.length === 0) {
+            swal("No tasks selected", "Please select at least one task to restore.", "info");
+            return;
+        }
+
+        // apply limits logic for bulk restoring
+        const idsToRestore = Array.from(checkedBoxes).map(cb => cb.value);
+        let columnsIncomingCount = { 'todo-list': 0, 'inprogress-list': 0, 'completed-list': 0 };
+        
+        idsToRestore.forEach(id => {
+            const t = tasks.find(t => t.id === id);
+            if(t) columnsIncomingCount[t.status]++;
+        });
+
+        let validationError = null;
+        for (const [status, incomingAmount] of Object.entries(columnsIncomingCount)) {
+            if (incomingAmount > 0) {
+                const limit = parseInt(columnLimits[status], 10);
+                if (limit > 0) {
+                    const currentCount = tasks.filter(t => !t.isArchived && t.status === status).length;
+                    if (currentCount + incomingAmount > limit) {
+                        validationError = `Restoring these tasks exceeds the limit for '${formatStatusName(status)}'.`;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (validationError) {
+            swal("Limit Reached", validationError, "error");
+            return;
+        }
+
+        swal({
+            title: "Restore Tasks?",
+            text: `You are about to restore ${checkedBoxes.length} task(s) to the board.`,
+            icon: "info",
+            buttons: {
+                cancel: true,
+                confirm: { text: "Restore Selected", value: true, visible: true, className: "", closeModal: false }
+            },
+        }).then(async (willRestore) => {
+            if (willRestore) {
+                await simulateNetworkRequest(); 
+
+                tasks.forEach(t => {
+                    if (idsToRestore.includes(t.id)) t.isArchived = false;
+                });
+                
+                saveTasksToStorage();
+                renderArchiveList();
+                renderAllTasks();
+                applyFilters(); 
+                swal.close();
+            }
+        });
+    });
+
+    document.getElementById('archive-delete-selected-btn').addEventListener('click', () => {
+        const checkedBoxes = document.querySelectorAll('.archive-checkbox:checked');
+        if (checkedBoxes.length === 0) {
+            swal("No tasks selected", "Please select at least one task to delete.", "info");
+            return;
+        }
+
+        swal({
+            title: "Delete Permanently?",
+            text: `You are about to permanently delete ${checkedBoxes.length} selected task(s).`,
+            icon: "warning",
+            buttons: {
+                cancel: true,
+                confirm: { text: "Delete Selected", value: true, visible: true, className: "", closeModal: false }
+            },
+            dangerMode: true,
+        }).then(async (willDelete) => {
+            if (willDelete) {
+                await simulateNetworkRequest(); 
+
+                const idsToDelete = Array.from(checkedBoxes).map(cb => cb.value);
+                tasks = tasks.filter(t => !idsToDelete.includes(t.id));
+                
+                saveTasksToStorage();
+                renderArchiveList(); 
+                swal.close();
+            }
+        });
+    });
+
+
+    // drag and drop logic
     let draggedItem = null;
 
     function addDragEvents(card) {
@@ -480,6 +693,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const taskIndex = tasks.findIndex(t => t.id === taskId);
                 if (taskIndex > -1) {
+                    const currentStatus = tasks[taskIndex].status;
+                    
+                    // apply limit on drag & drop
+                    if (currentStatus !== newStatus && isColumnFull(newStatus)) {
+                        swal("Limit Reached", `The '${formatStatusName(newStatus)}' column has reached its maximum limit.`, "error");
+                        renderAllTasks(); // reverts visual UI state instantly
+                        return;
+                    }
+
                     tasks[taskIndex].status = newStatus;
                     saveTasksToStorage();
                 }
@@ -516,14 +738,23 @@ document.addEventListener('DOMContentLoaded', () => {
     searchInput.addEventListener('input', applyFilters);
     priorityFilter.addEventListener('change', applyFilters);
 
-    // counters
+    // counters logic
     function updateAllCounts() {
         document.querySelectorAll('.column').forEach(col => {
             const visibleCards = Array.from(col.querySelectorAll('.task-card'))
                                       .filter(card => card.style.display !== 'none');
             
             const countSpan = col.querySelector('.task-count');
-            countSpan.textContent = `${visibleCards.length} Task${visibleCards.length !== 1 ? 's' : ''}`;
+            
+            // check if column has a limit set to display eg "2/5 Tasks"
+            const statusId = col.id.replace('col-', '') + '-list';
+            const limit = parseInt(columnLimits[statusId], 10);
+            
+            if (limit && limit > 0) {
+                countSpan.textContent = `${visibleCards.length}/${limit} Task${visibleCards.length !== 1 ? 's' : ''}`;
+            } else {
+                countSpan.textContent = `${visibleCards.length} Task${visibleCards.length !== 1 ? 's' : ''}`;
+            }
         });
     }
 
