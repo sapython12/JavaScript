@@ -6,7 +6,7 @@ body { background-color: #f4f5f8; color: #1e293b; }
 /* navbars */
 .top-nav { padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; background-color: #2b324a; color: white; }
 .nav-brand { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
-.nav-actions { display: flex; align-items: center; gap: 12px; }
+.nav-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: flex-end; }
 .btn-nav { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 600; transition: 0.2s; }
 .btn-nav:hover { background: rgba(255,255,255,0.2); }
 #theme-toggle { background: none; border: none; font-size: 20px; cursor: pointer; color: inherit; }
@@ -17,8 +17,8 @@ body { background-color: #f4f5f8; color: #1e293b; }
 .filter-bar select, .filter-bar input { padding: 6px 12px; border-radius: 4px; border: 1px solid #cbd5e1; outline: none; background-color: white; color: #334155; }
 .btn-delete-selected { padding: 6px 12px; border-radius: 4px; border: 1px solid #d9534f; background-color: #fff; color: #d9534f; cursor: pointer; font-weight: 600; transition: 0.2s; }
 .btn-delete-selected:hover { background-color: #d9534f; color: white; }
-.btn-archive-selected { padding: 6px 12px; border-radius: 4px; border: 1px solid #f0ad4e; background-color: #fff; color: #f0ad4e; cursor: pointer; font-weight: 600; transition: 0.2s; }
-.btn-archive-selected:hover { background-color: #f0ad4e; color: white; }
+.btn-archive-selected { padding: 6px 12px; border-radius: 4px; border: 1px solid #4285f4; background-color: #fff; color: #4285f4; cursor: pointer; font-weight: 600; transition: 0.2s; }
+.btn-archive-selected:hover { background-color: #4285f4; color: white; }
 
 /* main content container */
 .main-container { display: flex; gap: 20px; padding: 20px; max-width: 1200px; margin: 0 auto; align-items: flex-start;}
@@ -31,7 +31,7 @@ body { background-color: #f4f5f8; color: #1e293b; }
 .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #cbd5e1; font-size: 13px; outline: none; background-color: #ffffff; color: #1e293b; transition: border-color 0.2s; }
 .form-group input:focus, .form-group textarea:focus { border-color: #4285f4; }
 .form-group textarea { resize: vertical; min-height: 60px; }
-.btn-add { width: 100%; padding: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 14px; transition: opacity 0.2s; background-color: #4285f4; color: white; }
+.btn-add { width: 100%; padding: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 14px; transition: opacity 0.2s; background-color: #4285f4; color: white; display: flex; justify-content: center; align-items: center; gap: 8px; }
 .btn-add:hover { opacity: 0.9; }
 .btn-add:disabled { background-color: #94a3b8; cursor: not-allowed; opacity: 1; }
 
@@ -40,7 +40,7 @@ body { background-color: #f4f5f8; color: #1e293b; }
 .form-group.has-error input, .form-group.has-error textarea { border-color: #d9534f; }
 .form-group.has-error .error-text { display: block; }
 
-/* Kanban board */
+/* kanban board */
 .kanban-board { display: flex; gap: 20px; flex: 1; height: 75vh; }
 .column { flex: 1; display: flex; flex-direction: column; border-radius: 6px; overflow: hidden; border: 1px solid #e2e8f0; background-color: #ffffff; }
 
@@ -68,10 +68,9 @@ body { background-color: #f4f5f8; color: #1e293b; }
 .header-left input[type="checkbox"] { margin-top: 3px; cursor: pointer; }
 .header-left h4 { margin-bottom: 0; color: #1e293b; font-size: 14px; font-weight: 600; word-break: break-word; }
 
-.header-actions { display: flex; gap: 4px; }
+.header-actions { display: flex; gap: 4px; align-items: center; }
 .action-btn { background: none; border: none; color: #94a3b8; font-size: 14px; cursor: pointer; padding: 2px 4px; border-radius: 4px; transition: 0.2s; }
 .action-btn:hover { color: #4285f4; background-color: #e2e8f0; }
-.delete-btn { font-size: 16px; line-height: 1; }
 .delete-btn:hover { color: #d9534f; background-color: #fee2e2; }
 
 .task-card p { font-size: 13px; margin-bottom: 16px; line-height: 1.4; color: #64748b; }
@@ -92,13 +91,19 @@ body { background-color: #f4f5f8; color: #1e293b; }
 .modal-content { background: white; width: 90%; max-width: 400px; border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); display: flex; flex-direction: column; overflow: hidden; }
 .modal-header { padding: 16px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background-color: #f8f9fa; }
 .modal-header h3 { font-size: 16px; font-weight: 600; color: #1e293b; }
-.close-modal { background: none; border: none; font-size: 20px; cursor: pointer; color: #94a3b8; line-height: 1; }
+.close-modal { background: none; border: none; font-size: 18px; cursor: pointer; color: #94a3b8; }
 .close-modal:hover { color: #d9534f; }
 .modal-body { padding: 20px; }
 .view-desc-text { font-size: 14px; color: #64748b; margin-top: 10px; line-height: 1.5; white-space: pre-wrap; }
 
+/* settings */
+.settings-hint { font-size: 13px; color: #64748b; margin-bottom: 15px; line-height: 1.4; }
+
 /* archive styles */
+.archive-bulk-actions { display: flex; gap: 10px; margin-bottom: 15px; justify-content: flex-end; }
 .archived-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 8px; background: #f8f9fa; }
+.archived-item-info { display: flex; align-items: center; gap: 10px; }
+.archived-item-info input[type="checkbox"] { cursor: pointer; }
 .archived-item-info h4 { font-size: 14px; margin-bottom: 4px; color: #1e293b; }
 .archived-item-info p { font-size: 12px; color: #64748b; }
 .archived-item-actions { display: flex; gap: 6px; }
@@ -116,5 +121,6 @@ body { background-color: #f4f5f8; color: #1e293b; }
     .kanban-board { flex-direction: column; height: auto; }
     .column { min-height: 250px; }
     .filter-bar { justify-content: flex-start; }
-    .nav-actions { flex-direction: column; align-items: flex-end; }
+    .nav-actions { justify-content: flex-start; margin-top: 10px; width: 100%; }
+    .archive-bulk-actions { justify-content: flex-start; flex-wrap: wrap; }
 }
