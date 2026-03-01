@@ -1,0 +1,95 @@
+/* css/style.css */
+:root {
+    --primary-color: #2563eb; 
+    --success-color: #16a34a; 
+    --bg-color: #ffffff;
+    --sidebar-bg: #f8fafc;
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+    --border-color: #e2e8f0;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', sans-serif;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-main);
+}
+
+.app-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+.sidebar {
+    width: 250px;
+    background-color: var(--sidebar-bg);
+    border-right: 1px solid var(--border-color);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar nav button {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 5px;
+    text-align: left;
+    background: none;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.sidebar nav button.active {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+#active-timer-indicator {
+    margin-top: auto;
+    padding: 10px;
+    background-color: var(--success-color);
+    color: white;
+    text-align: center;
+    border-radius: 5px;
+    font-weight: 500;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.main-content {
+    flex: 1;
+    padding: 40px;
+}
+
+.timer-display {
+    font-size: 4rem;
+    font-weight: 600;
+    margin: 20px 0;
+    color: var(--text-main);
+}
+
+.timer-display.running {
+    color: var(--success-color);
+}
+
+/* mobile responsiveness */
+@media (max-width: 768px) {
+    .app-container { flex-direction: column; }
+    .sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border-color); padding: 15px; }
+    .sidebar nav { display: flex; overflow-x: auto; gap: 10px; padding-bottom: 5px; }
+    .sidebar nav button { margin-bottom: 0; white-space: nowrap; flex: 1; text-align: center; }
+    .main-content { padding: 20px; }
+    .timer-controls { flex-direction: column !important; }
+    .timer-controls select, .timer-controls input, .timer-controls button { width: 100%; max-width: 100% !important; }
+    .timer-display { font-size: 3rem; text-align: center; }
+}

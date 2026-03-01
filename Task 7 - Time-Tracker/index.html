@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Tracker Web App</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <h2>Time Tracker</h2>
+            <nav>
+                <button id="nav-timer" class="btn btn-ghost active"><i class="fa-solid fa-clock"></i> Timer</button>
+                <button id="nav-projects" class="btn btn-ghost"><i class="fa-solid fa-folder"></i> Projects</button>
+                <button id="nav-logs" class="btn btn-ghost"><i class="fa-solid fa-list"></i> Time Logs</button>
+            </nav>
+            <div id="active-timer-indicator" class="hidden">⏱️ Timer Running</div>
+        </aside>
+
+        <main class="main-content">
+            
+            <section id="view-timer" class="view-section">
+                <h1>Track Time</h1>
+                <div class="timer-display" id="timer-display">00:00:00</div>
+                
+                <div class="timer-controls" style="display: flex; gap: 10px; margin-top: 20px;">
+                    <select id="timer-project-select" class="form-select" style="max-width: 200px;">
+                        <option value="">Select Project</option>
+                    </select>
+                    <input type="text" id="timer-task-name" class="form-input" placeholder="What are you working on?">
+                    <button id="btn-start-timer" class="btn btn-primary">Start</button>
+                    <button id="btn-stop-timer" class="btn btn-danger hidden">Stop</button>
+                </div>
+                <div id="timer-error" class="form-error" style="margin-top: 10px;"></div>
+            </section>
+
+            <section id="view-projects" class="view-section hidden">
+                <h1>Manage Projects</h1>
+                <div class="form-group" style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <input type="text" id="new-project-name" class="form-input" placeholder="Project Name">
+                    <input type="color" id="new-project-color" class="form-input" style="max-width: 50px; padding: 2px;">
+                    <button id="btn-add-project" class="btn btn-primary">Add Project</button>
+                </div>
+                <div id="project-error" class="form-error" style="margin-bottom: 20px;"></div>
+                
+                <div id="project-list-container"></div>
+            </section>
+
+            <section id="view-logs" class="view-section hidden">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h1>Time Logs & Daily Summary</h1>
+                    <button id="btn-export-csv" class="btn btn-primary"><i class="fa-solid fa-download"></i> Export CSV</button>
+                </div>
+                <div id="export-error" class="form-error" style="margin-top: 10px; text-align: right;"></div>
+                <div id="daily-summary-container" style="margin: 20px 0;"></div>
+                <div id="logs-list-container"></div>
+            </section>
+
+        </main>
+    </div>
+
+    <div id="delete-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 10px;">Confirm Deletion</h3>
+            <p id="modal-message">Are you sure you want to delete this?</p>
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                <button id="btn-cancel-delete" class="btn btn-ghost">Cancel</button>
+                <button id="btn-confirm-delete" class="btn btn-danger">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/storage.js"></script>
+    <script src="js/timer.js"></script>
+    <script src="js/projects.js"></script>
+    <script src="js/logs.js"></script>
+    <script src="js/export.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
