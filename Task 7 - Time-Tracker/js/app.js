@@ -7,6 +7,9 @@ import { exportToCSV } from './export.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
+    // helper to simulate network delay for button loaders
+    const simulateNetworkDelay = () => new Promise(resolve => setTimeout(resolve, 800));
+
     // 1. theme setup
     const themeToggle = document.getElementById('theme-toggle');
     const body = document.body;
@@ -25,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
         applyTheme(currentTheme);
     });
 
-    // 2. view toggling (tracker vs dashboard)
+    // 2. view toggling
     const views = {
         trackerBtn: document.getElementById('view-tracker-btn'),
         dashboardBtn: document.getElementById('view-dashboard-btn'),
@@ -91,14 +94,24 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    projectForm.addEventListener('submit', (e) => {
+    projectForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         if (!validateForm(projectForm)) return;
+        
+        const submitBtn = projectForm.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+        await simulateNetworkDelay();
         
         addProject(document.getElementById('proj-name').value, document.getElementById('proj-color').value);
         updateProjectSelects();
         projectForm.reset();
         swal("Success", "Project added successfully", "success");
+        
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
     });
 
     // 5. timer ui sync
@@ -135,9 +148,16 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('mousemove', resetIdle);
     window.addEventListener('keypress', resetIdle);
 
-    timerUI.startForm.addEventListener('submit', (e) => {
+    timerUI.startForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         if (!validateForm(timerUI.startForm)) return;
+        
+        const submitBtn = timerUI.startForm.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Starting...';
+
+        await simulateNetworkDelay();
         
         startTimer(
             document.getElementById('task-project-select').value,
@@ -145,6 +165,9 @@ document.addEventListener('DOMContentLoaded', () => {
         );
         updateTimerUI();
         timerUI.startForm.reset();
+        
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
     });
 
     timerUI.stopBtn.addEventListener('click', stopTimer);
@@ -191,7 +214,7 @@ document.addEventListener('DOMContentLoaded', () => {
             logsList.appendChild(card);
         });
 
-        // fix applied here: grab the logid immediately before the async call
+        // safely bind delete events
         document.querySelectorAll('.delete-log').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const logId = e.currentTarget.dataset.id;
@@ -214,12 +237,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const manualModal = document.getElementById('manual-modal');
     document.getElementById('manual-time-btn').addEventListener('click', () => manualModal.style.display = 'flex');
 
-    document.getElementById('manual-log-form').addEventListener('submit', (e) => {
+    document.getElementById('manual-log-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const start = new Date(document.getElementById('manual-start').value).getTime();
         const end = new Date(document.getElementById('manual-end').value).getTime();
 
         if (end <= start) return swal("Error", "End time must be after start time.", "error");
+
+        const form = e.target;
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+        await simulateNetworkDelay();
 
         addLog(
             document.getElementById('manual-proj').value,
@@ -231,8 +262,11 @@ document.addEventListener('DOMContentLoaded', () => {
         
         renderLogsUI();
         manualModal.style.display = 'none';
-        e.target.reset();
+        form.reset();
         swal("Saved", "Manual time logged.", "success");
+        
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
     });
 
     // 8. charts logic
@@ -299,6 +333,44 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('confirm-export-btn').addEventListener('click', () => { exportToCSV(); exportModal.style.display = 'none'; });
     
     document.getElementById('import-btn').addEventListener('click', () => importModal.style.display = 'flex');
+
+    // dummy import parsing for bonus requirement
+    document.getElementById('import-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const file = document.getElementById('import-file').files[0];
+        if (!file) return;
+
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Importing...';
+
+        await simulateNetworkDelay();
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const text = event.target.result;
+            const lines = text.split('\n').slice(1); 
+            let count = 0;
+            
+            lines.forEach(line => {
+                if(!line.trim()) return;
+                const cols = line.split('","').map(c => c.replace(/"/g, ''));
+                if(cols.length >= 4) {
+                    addLog('imported', cols[2], Date.now(), Date.now(), 'Imported');
+                    count++;
+                }
+            });
+            
+            renderLogsUI();
+            importModal.style.display = 'none';
+            e.target.reset();
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+            swal("Imported", `Imported ${count} logs.`, "success");
+        };
+        reader.readAsText(file);
+    });
     
     document.querySelectorAll('.close-modal').forEach(btn => {
         btn.addEventListener('click', () => document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'));
