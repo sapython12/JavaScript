@@ -1,28 +1,52 @@
+/* light-style.css */
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'segoe ui', roboto, sans-serif; background-color: #f3f4f6; color: #1f2937; line-height: 1.5; padding: 20px; transition: background-color 0.3s ease; }
+body { font-family: 'Segoe UI', Roboto, sans-serif; background-color: #f3f4f6; color: #1f2937; line-height: 1.5; padding: 20px; transition: background-color 0.3s ease; }
 .dashboard-container { max-width: 1200px; margin: 0 auto; }
+
+/* Header and controls layout */
 header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; margin-bottom: 24px; gap: 15px; }
 header h1 { font-size: 1.8rem; color: #111827; }
 .stats { background: #ffffff; padding: 10px 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); font-weight: 500; font-size: 0.95rem; }
 .stats span { margin: 0 5px; }
-.controls { display: flex; gap: 10px; }
+
+/* Fixed controls wrapping here */
+.controls { display: flex; flex-wrap: wrap; gap: 10px; }
 .controls input, .controls select { padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; outline: none; background: #ffffff; color: #1f2937; }
 .controls button { background: #ffffff; border: 1px solid #d1d5db; padding: 8px 12px; border-radius: 6px; cursor: pointer; color: #374151; }
+
+/* Task input form */
 #task-form { display: flex; flex-wrap: wrap; gap: 15px; background: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 30px; align-items: flex-start; }
 .form-group { display: flex; flex-direction: column; flex: 1; min-width: 200px; }
 .form-group input, .form-group select { padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 1rem; outline: none; background: #ffffff; color: #1f2937; }
 .inline-error { color: #ef4444; font-size: 0.85rem; margin-top: 5px; min-height: 18px; }
 #task-form button { background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 1rem; font-weight: 500; }
+
+/* Kanban board */
 .kanban-board { display: flex; gap: 20px; overflow-x: auto; padding-bottom: 10px; }
 .column { flex: 1; background: #e5e7eb; padding: 15px; border-radius: 8px; min-width: 300px; display: flex; flex-direction: column; gap: 15px; }
 .column h3 { font-size: 1.1rem; color: #374151; text-transform: uppercase; font-weight: 600; }
 .task-list { display: flex; flex-direction: column; gap: 10px; min-height: 150px; }
+
+/* Task cards */
 .task-card { background: #ffffff; padding: 15px; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor: grab; display: flex; justify-content: space-between; align-items: center; }
 .task-card strong { font-weight: 500; color: #1f2937; word-break: break-word; }
 .priority-high { border-left: 5px solid #ef4444; }
 .priority-medium { border-left: 5px solid #f59e0b; }
 .priority-low { border-left: 5px solid #10b981; }
+
+/* Actions */
 .task-actions button { background: none; border: none; cursor: pointer; padding: 5px; border-radius: 4px; transition: all 0.2s; margin-left: 5px;}
 .btn-delete { color: #9ca3af; } .btn-delete:hover { color: #ef4444; background: #fee2e2; }
 .btn-edit { color: #9ca3af; } .btn-edit:hover { color: #3b82f6; background: #dbeafe; }
-@media (max-width: 768px) { .kanban-board { flex-direction: column; } .column { min-height: auto; } }
+
+/* --- Mobile Responsiveness Fixes --- */
+@media (max-width: 768px) { 
+    header { flex-direction: column; align-items: stretch; }
+    .controls input, .controls select { flex-grow: 1; } /* Makes inputs stretch to fill space */
+    #task-form { flex-direction: column; }
+    .form-group { width: 100%; }
+    #task-form button { width: 100%; } /* Full width button on mobile */
+    .kanban-board { flex-direction: column; } 
+    .column { min-height: auto; min-width: 100%; } 
+}
